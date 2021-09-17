@@ -1,0 +1,235 @@
+Index: app/src/main/java/com/example/mvvmkotlin/repository/MainActivityRepository.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/mvvmkotlin/repository/MainActivityRepository.kt	(date 1631867047192)
++++ app/src/main/java/com/example/mvvmkotlin/repository/MainActivityRepository.kt	(date 1631867047192)
+@@ -0,0 +1,42 @@
++package com.example.mvvmkotlin.repository
++
++import android.util.Log
++import androidx.lifecycle.MutableLiveData
++import com.example.mvvmkotlin.model.ServicesSetterGetter
++import com.example.mvvmkotlin.retrofit.RetrofitClient
++import retrofit2.Call
++import retrofit2.Callback
++import retrofit2.Response
++
++object MainActivityRepository {
++
++    val serviceSetterGetter = MutableLiveData<ServicesSetterGetter>()
++
++    fun getServicesApiCall(): MutableLiveData<ServicesSetterGetter> {
++
++        val call = RetrofitClient.apiInterface.getServices()
++
++        call.enqueue(object: Callback<ServicesSetterGetter> {
++            override fun onFailure(call: Call<ServicesSetterGetter>, t: Throwable) {
++                // TODO("Not yet implemented")
++                Log.v("DEBUG : ", t.message.toString())
++            }
++
++            override fun onResponse(
++                call: Call<ServicesSetterGetter>,
++                response: Response<ServicesSetterGetter>
++            ) {
++                // TODO("Not yet implemented")
++                Log.v("DEBUG : ", response.body().toString())
++
++                val data = response.body()
++
++                val msg = data!!.message
++
++                serviceSetterGetter.value = ServicesSetterGetter(msg)
++            }
++        })
++
++        return serviceSetterGetter
++    }
++}
+\ No newline at end of file
+Index: app/src/main/java/com/example/mvvmkotlin/viewmodel/MainActivityViewModel.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/mvvmkotlin/viewmodel/MainActivityViewModel.kt	(date 1631867047197)
++++ app/src/main/java/com/example/mvvmkotlin/viewmodel/MainActivityViewModel.kt	(date 1631867047197)
+@@ -0,0 +1,18 @@
++package com.example.mvvmkotlin.viewmodel
++
++import androidx.lifecycle.LiveData
++import androidx.lifecycle.MutableLiveData
++import androidx.lifecycle.ViewModel
++import com.example.mvvmkotlin.model.ServicesSetterGetter
++import com.example.mvvmkotlin.repository.MainActivityRepository
++
++class MainActivityViewModel : ViewModel() {
++
++    var servicesLiveData: MutableLiveData<ServicesSetterGetter>? = null
++
++    fun getUser() : LiveData<ServicesSetterGetter>? {
++        servicesLiveData = MainActivityRepository.getServicesApiCall()
++        return servicesLiveData
++    }
++
++}
+\ No newline at end of file
+Index: app/src/main/java/com/example/mvvmkotlin/retrofit/RetrofitClient.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/mvvmkotlin/retrofit/RetrofitClient.kt	(date 1631867047093)
++++ app/src/main/java/com/example/mvvmkotlin/retrofit/RetrofitClient.kt	(date 1631867047093)
+@@ -0,0 +1,39 @@
++package com.example.mvvmkotlin.retrofit
++
++import ir.alirezabdn.wp7progress.BuildConfig
++import okhttp3.OkHttpClient
++import okhttp3.logging.HttpLoggingInterceptor
++import okhttp3.logging.HttpLoggingInterceptor.Level
++import retrofit2.Retrofit
++import retrofit2.converter.gson.GsonConverterFactory
++
++object RetrofitClient {
++
++    const val MainServer = "http://api.drfriday.in/api/user/"
++    
++    const val ImageMainServer = "http://api.drfriday.in/";
++
++    val retrofitClient: Retrofit.Builder by lazy {
++
++        val levelType: Level
++        if (BuildConfig.BUILD_TYPE.contentEquals("debug"))
++            levelType = Level.BODY else levelType = Level.NONE
++
++        val logging = HttpLoggingInterceptor()
++        logging.setLevel(levelType)
++
++        val okhttpClient = OkHttpClient.Builder()
++        okhttpClient.addInterceptor(logging)
++
++        Retrofit.Builder()
++            .baseUrl(MainServer)
++            .client(okhttpClient.build())
++            .addConverterFactory(GsonConverterFactory.create())
++    }
++
++    val apiInterface: ApiInterface by lazy {
++        retrofitClient
++            .build()
++            .create(ApiInterface::class.java)
++    }
++}
+Index: app/src/main/java/com/example/mvvmkotlin/retrofit/ApiInterface.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/mvvmkotlin/retrofit/ApiInterface.kt	(date 1631867047126)
++++ app/src/main/java/com/example/mvvmkotlin/retrofit/ApiInterface.kt	(date 1631867047126)
+@@ -0,0 +1,12 @@
++package com.example.mvvmkotlin.retrofit
++
++import com.example.mvvmkotlin.model.ServicesSetterGetter
++import retrofit2.Call
++import retrofit2.http.GET
++
++interface ApiInterface {
++
++    @GET("services")
++    fun getServices() : Call<ServicesSetterGetter>
++
++}
+\ No newline at end of file
+Index: app/src/main/java/com/example/mvvmkotlin/Notes/Steps.txt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/mvvmkotlin/Notes/Steps.txt	(date 1631047070998)
++++ app/src/main/java/com/example/mvvmkotlin/Notes/Steps.txt	(date 1631047070998)
+@@ -0,0 +1,15 @@
++// Steps to Create MVVM in Android using Kotlin
++
++1. Add ViewModel and LiveData dependencies
++
++2. Create 4 packages namely - model(Setter/Getter), repository, view, viewmodel
++
++3. Create a Model(Setter/Getter) class inside model package
++
++4. Create a ViewModel class inside ViewModel package
++
++5. Make a ViewModel class object using ViewProviders in your Activity/Fragment class
++
++6. Make a singleton Retrofit class for Retrofit client and attach a logger and write code for Retrofit
++
++7. Make a Repository class and link it to the Retrofit as shown in the code
+\ No newline at end of file
+Index: app/src/main/java/com/example/mvvmkotlin/model/ServicesSetterGetter.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/mvvmkotlin/model/ServicesSetterGetter.kt	(date 1631867047100)
++++ app/src/main/java/com/example/mvvmkotlin/model/ServicesSetterGetter.kt	(date 1631867047100)
+@@ -0,0 +1,5 @@
++package com.example.mvvmkotlin.model
++
++data class ServicesSetterGetter (
++    val message: String? = null
++)
+\ No newline at end of file
+Index: app/src/main/java/com/example/mvvmkotlin/view/MainActivity.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/mvvmkotlin/view/MainActivity.kt	(date 1631867047082)
++++ app/src/main/java/com/example/mvvmkotlin/view/MainActivity.kt	(date 1631867047082)
+@@ -0,0 +1,43 @@
++package com.example.mvvmkotlin.view
++
++import android.content.Context
++import androidx.appcompat.app.AppCompatActivity
++import android.os.Bundle
++import androidx.lifecycle.Observer
++import androidx.lifecycle.ViewModelProvider
++import com.example.mvvmkotlin.R
++import com.example.mvvmkotlin.viewmodel.MainActivityViewModel
++import kotlinx.android.synthetic.main.activity_main.*
++
++class MainActivity : AppCompatActivity() {
++
++    lateinit var context: Context
++
++    lateinit var mainActivityViewModel: MainActivityViewModel
++
++    override fun onCreate(savedInstanceState: Bundle?) {
++        super.onCreate(savedInstanceState)
++        setContentView(R.layout.activity_main)
++
++        context = this@MainActivity
++
++        mainActivityViewModel = ViewModelProvider(this).get(MainActivityViewModel::class.java)
++
++        btnClick.setOnClickListener {
++
++            wp7progressBar.showProgressBar()
++
++            mainActivityViewModel.getUser()!!.observe(this, Observer { serviceSetterGetter ->
++
++                wp7progressBar.hideProgressBar()
++
++                val msg = serviceSetterGetter.message
++
++                lblResponse.text = msg
++
++            })
++
++        }
++
++    }
++}
